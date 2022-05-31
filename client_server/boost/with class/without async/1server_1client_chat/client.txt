@@ -1,0 +1,53 @@
+#include <iostream>
+#include <boost\asio.hpp>
+#include <sstream>
+#include <thread>
+
+class Client {
+public :
+	Client():resolver(ioContext), sock(ioContext) {
+		 endpoint= resolver.resolve("127.0.0.1", "99");
+		 boost::asio::connect(sock, endpoint);
+		 auto aa = std::async(&Client::read, this);
+		 auto a = std::async(&Client::write, this);
+
+	}
+	void read() {
+		std::cout << "in read 1";
+		boost::asio::read_until(sock, streamBuf, "\n");
+
+
+		std::istream is(&streamBuf);
+		std::string line;
+		std::getline(is, line);
+		std::cout << line << "\n";
+		read();
+
+	}
+	void write() {
+
+		std::string str;
+		std::cin >> str;
+		boost::asio::write(sock, boost::asio::buffer((str + "\n").c_str(), str.size() + 1));
+		write();
+
+	}
+private :
+	boost::asio::io_context ioContext;
+	boost::asio::ip::tcp::resolver resolver;
+	boost::asio::ip::tcp::resolver::results_type endpoint;
+	boost::asio::streambuf streamBuf;
+	boost::asio::ip::tcp::socket sock;
+
+};
+
+
+
+
+
+int main()
+{
+	Client a;
+
+
+}

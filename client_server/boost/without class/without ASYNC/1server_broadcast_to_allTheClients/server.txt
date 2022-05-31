@@ -1,0 +1,49 @@
+#include <iostream>
+
+#include <optional>
+#include <boost\asio.hpp>
+#include <thread>
+#include <vector>
+#include <unordered_set>
+#include <future>
+int count = 0;
+
+
+std::vector<std::shared_ptr<boost::asio::ip::tcp::socket>>connections;
+boost::asio::io_context ioContext;
+boost::asio::ip::tcp::acceptor acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 99));
+
+void fooWrite() {
+
+	std::cout << "fooWrite";
+	std::string str;
+	std::cin >> str;
+	for (int i = 0; i < count; i++) {
+		boost::asio::write(*connections[i].get(), boost::asio::buffer(str + "\n"));
+
+	}
+	fooWrite();
+
+}
+
+void foo() {
+
+	
+	std::shared_ptr<boost::asio::ip::tcp::socket> sock(new boost::asio::ip::tcp::socket(ioContext));
+	std::cout << "accepting\n";
+	acceptor.accept(*sock.get());
+	count++;
+	connections.push_back(sock);
+	std::cout << "accepted\n";
+	foo();
+
+}
+int main()
+{
+	auto a = std::async(fooWrite);
+	foo();
+				
+
+	return 0;
+
+}

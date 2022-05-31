@@ -1,0 +1,83 @@
+#include <iostream>
+#include <boost\asio.hpp>
+#include <sstream>
+#include <thread>
+
+void foo(boost::asio::ip::tcp::socket& sock, boost::asio::streambuf &streamBuf) {
+	std::cout << "in read 1";
+	boost::asio::read_until(sock, streamBuf, "\n");
+			
+
+			std::cout << "===============================================================\n";
+			std::istream is(&streamBuf);
+			std::string line;
+			std::getline(is, line);
+			std::cout << line << "\n";
+			std::cout << "===============================================================\n";
+			foo(sock, streamBuf);
+
+}
+void writeFoo(boost::asio::ip::tcp::socket& sock) {
+
+	std::string str;
+	std::cin >> str;
+	boost::asio::async_write(sock, boost::asio::buffer((str + "\n").c_str(), str.size() + 1), [&sock, &str](boost::system::error_code ec, size_t bytesTransferred) {
+		std::cout << "sended";
+		writeFoo(sock);
+		});
+}
+void f() {
+	for (int i = 0; i < 100000000;i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}std::cout << "hello";
+	f();
+}
+void g() {
+	std::string str;
+	std::cin >> str;
+	std::cout << str;
+	g();
+}
+int main()
+{
+	boost::asio::io_context ioContext;
+	boost::asio::ip::tcp::resolver resolver(ioContext);
+	boost::asio::ip::tcp::resolver::results_type endpoint = resolver.resolve("127.0.0.1", "99");
+	boost::asio::streambuf streamBuf;
+
+	boost::asio::ip::tcp::socket sock(ioContext);
+	boost::asio::async_connect(sock, endpoint, [&sock,&streamBuf](boost::system::error_code ec, boost::asio::ip::tcp::endpoint ep) {
+		
+		foo(sock,streamBuf);
+
+
+	});
+	auto a = std::async(f);
+	ioContext.run();
+
+
+}

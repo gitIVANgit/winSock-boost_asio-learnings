@@ -1,0 +1,50 @@
+#include <iostream>
+
+#include <string>
+#include <boost\asio.hpp>
+#include <thread>
+#include <vector>
+#include <unordered_set>
+#include <future>
+
+
+void foo(boost::asio::ip::tcp::socket& sock) {
+	
+	std::string str;
+	std::cin >> str;
+	boost::asio::write(sock, boost::asio::buffer((str + "\n").c_str(), str.size() + 1));
+		std::cout << "sended";
+		foo(sock);
+}
+
+void readFoo(boost::asio::ip::tcp::socket& sock, boost::asio::streambuf& streamBuf) {
+	std::cout << "in read 1";
+	boost::asio::read_until(sock, streamBuf, "\n");
+
+
+	std::cout << "===============================================================\n";
+	std::istream is(&streamBuf);
+	std::string line;
+	std::getline(is, line);
+	std::cout << line << "\n";
+	std::cout << "===============================================================\n";
+	readFoo(sock, streamBuf);
+
+}
+
+int main()
+{
+	boost::asio::io_context ioContext;
+	boost::asio::ip::tcp::acceptor acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 99));
+	boost::asio::ip::tcp::socket sock(ioContext);
+	boost::asio::streambuf streamBuf;
+	
+	acceptor.accept(sock);
+	
+	auto a = std::async(foo, std::ref(sock));
+
+	auto xa = std::async(readFoo, std::ref(sock), std::ref(streamBuf));
+	
+
+	return 0;
+}

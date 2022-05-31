@@ -1,0 +1,87 @@
+#include <iostream>
+
+#include <string>
+#include <boost\asio.hpp>
+#include <thread>
+#include <vector>
+#include <unordered_set>
+#include <future>
+
+
+void foo(boost::asio::ip::tcp::socket& sock) {
+	
+	std::string str;
+	std::cin >> str;
+	boost::asio::async_write(sock, boost::asio::buffer((str+"\n").c_str(), str.size() + 1), [&sock, &str](boost::system::error_code ec, size_t bytesTransferred) {
+		std::cout << "sended";
+		foo(sock);
+		});
+}
+
+void readFoo(boost::asio::ip::tcp::socket& sock, boost::asio::streambuf& streamBuf) {
+	std::cout << "in read 1";
+	boost::asio::async_read_until(sock, streamBuf, "\n", [&sock, &streamBuf]
+	(boost::system::error_code ec, size_t bytesTransferred) {
+			if (ec) {
+				std::cout << ec.message();
+				return;
+			}
+			std::cout << "in read 2";
+
+			std::cout << bytesTransferred;
+			std::cout << "===============================================================\n";
+			std::istream is(&streamBuf);
+			std::string line;
+			std::getline(is, line);
+			std::cout << line << "\n";
+			std::cout << "===============================================================\n";
+
+			readFoo(sock, streamBuf);
+		}
+	);
+
+}
+void f() {
+	for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}for (int i = 0; i < 100000000; i++) {
+
+	}std::cout << "hello";
+}
+int main()
+{
+	boost::asio::io_context ioContext;
+	boost::asio::ip::tcp::acceptor acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 99));
+	boost::asio::ip::tcp::socket sock(ioContext);
+	boost::asio::streambuf streamBuf;
+	acceptor.async_accept(sock, [&sock, &streamBuf](const boost::system::error_code& error) {
+	//	auto o = std::async(readFoo, std::ref(sock), std::ref(streamBuf));
+		foo(sock);
+		});
+	//auto a = std::async(f);
+	ioContext.run();
+
+	return 0;
+}

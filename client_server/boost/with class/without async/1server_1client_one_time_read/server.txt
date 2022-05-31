@@ -1,0 +1,34 @@
+#include <iostream>
+
+#include <optional>
+#include <boost\asio.hpp>
+#include <thread>
+#include <vector>
+#include <unordered_set>
+#include <future>
+
+class Server {
+public:
+	Server() : acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 99)),sock(ioContext) {
+		acceptor.accept(sock);
+		startReading(sock);
+	}
+	void startReading(boost::asio::ip::tcp::socket& sock) {
+		boost::asio::streambuf streamBuf;
+		boost::asio::read_until(sock, streamBuf, "\n");
+		std::istream is(&streamBuf);
+		std::string line;
+		std::getline(is, line);
+		std::cout << line << "\n";
+	}
+private:
+	boost::asio::io_context ioContext;
+	boost::asio::ip::tcp::acceptor acceptor;
+	boost::asio::ip::tcp::socket sock;
+};
+int main()
+{
+	Server a;
+	return 0;
+
+}

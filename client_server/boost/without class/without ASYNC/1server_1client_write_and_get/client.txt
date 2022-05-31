@@ -1,0 +1,28 @@
+#include <iostream>
+#include <boost\asio.hpp>
+#include <sstream>
+
+int main()
+{
+	try {
+		boost::asio::io_context ioContext;
+		boost::asio::ip::tcp::resolver resolver(ioContext);
+		boost::asio::ip::tcp::resolver::results_type endpoint = resolver.resolve("127.0.0.1", "99");
+
+		boost::asio::ip::tcp::socket sock(ioContext);
+		boost::asio::connect(sock, endpoint);
+		boost::asio::streambuf streamBuf;
+		boost::system::error_code er;
+		boost::asio::read_until(sock, streamBuf, "\n", er);
+		std::istream is(&streamBuf);
+		std::string line;
+		std::getline(is, line);
+		std::cout << line;
+		if (er) {
+			throw boost::system::system_error(er);
+		}
+	}
+	catch(std::exception&er) {
+		std::cout << er.what();
+	}
+}

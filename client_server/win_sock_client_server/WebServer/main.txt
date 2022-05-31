@@ -1,0 +1,13 @@
+#include "WebServer.h"
+
+void main()
+{
+	char i[8] = "0.0.0.0";
+	WebServer webServer(i, 8080);
+	if (webServer.init1() != 0)
+		return;
+
+	webServer.run1();
+
+	system("pause");
+}

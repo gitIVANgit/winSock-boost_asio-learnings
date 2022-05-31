@@ -1,0 +1,40 @@
+#include <iostream>
+
+#include <string>
+#include <boost\asio.hpp>
+#include <thread>
+#include <vector>
+#include <unordered_set>
+#include <future>
+#include<queue>
+std::queue<std::string>que;
+void foo(boost::asio::ip::tcp::socket&sock) {
+
+
+	boost::asio::async_write(sock, boost::asio::buffer(que.front()), [&sock](boost::system::error_code ec, size_t bytesTransferred) {		
+			que.pop();
+			if (que.empty())
+				return;
+		foo(sock);
+	});
+}
+int main()
+{
+	boost::asio::io_context ioContext;
+	boost::asio::ip::tcp::acceptor acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 99));
+	boost::asio::ip::tcp::socket sock(ioContext);
+	acceptor.accept(sock);
+	que.push("1\n");
+	que.push("2\n");
+	que.push("3\n");
+	que.push("4\n");
+	que.push("5\n");
+	que.push("6\n");
+	que.push("7\n");
+
+			foo(sock);
+	
+	ioContext.run();
+	
+	return 0;
+}

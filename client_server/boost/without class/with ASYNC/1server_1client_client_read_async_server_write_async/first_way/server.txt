@@ -1,0 +1,32 @@
+#include <iostream>
+
+#include <string>
+#include <boost\asio.hpp>
+#include <thread>
+#include <vector>
+#include <unordered_set>
+#include <future>
+
+
+void foo(boost::asio::ip::tcp::socket&sock,std::string str) {
+
+
+	boost::asio::async_write(sock, boost::asio::buffer((str+"\n").c_str(),str.size()+1), [&sock](boost::system::error_code ec, size_t bytesTransferred) {
+		std::cout << "sended\n";
+	});
+}
+int main()
+{
+	boost::asio::io_context ioContext;
+	boost::asio::ip::tcp::acceptor acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 99));
+	boost::asio::ip::tcp::socket sock(ioContext);
+	acceptor.accept(sock);
+	while (true) {
+		std::string str;
+		std::cin >> str;
+			foo(sock,str);
+	}
+	ioContext.run();
+	
+	return 0;
+}

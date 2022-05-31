@@ -1,0 +1,21 @@
+#include <iostream>
+#include <boost\asio.hpp>
+
+int main()
+{
+		boost::asio::io_context ioContext;
+		boost::asio::ip::tcp::acceptor acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 99));
+		while (true) {
+			std::cout << "accepting\n";
+			boost::asio::ip::tcp::socket sock(ioContext);
+			acceptor.accept(sock);
+			std::cout << "accepted \n";
+
+			std::string str = "hello client";
+			boost::asio::write(sock, boost::asio::buffer(str+"\n"));
+		}
+	
+	
+	return 0;
+
+}

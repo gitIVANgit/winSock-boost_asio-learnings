@@ -1,0 +1,61 @@
+#include <iostream>
+
+#include <optional>
+#include <boost\asio.hpp>
+#include <thread>
+#include <vector>
+#include <unordered_set>
+#include <future>
+int count = 0;
+
+
+std::vector<std::shared_ptr<boost::asio::ip::tcp::socket>>connections;
+boost::asio::io_context ioContext;
+boost::asio::ip::tcp::acceptor acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 99));
+
+void broadcast(std::string msg) {
+
+	std::cout << "broadcast";
+	std::string str=msg;
+	for (int i = 0; i < count; i++) {
+		boost::asio::write(*connections[i].get(), boost::asio::buffer(str + "\n"));
+
+	}
+
+}
+
+void fooRead(std::shared_ptr<boost::asio::ip::tcp::socket>& sock) {
+	std::cout << "fooRead";
+		boost::asio::streambuf streamBuf;
+		boost::asio::read_until(*sock.get(), streamBuf, "\n");
+			std::istream is(&streamBuf);
+		std::string line;
+		std::getline(is, line);
+		std::cout << line;
+		
+		broadcast(line);
+		fooRead(sock);		
+
+}
+
+void foo() {
+
+	
+	std::shared_ptr<boost::asio::ip::tcp::socket> sock(new boost::asio::ip::tcp::socket(ioContext));
+	std::cout << "accepting\n";
+	acceptor.accept(*sock.get());
+	count++;
+	connections.push_back(sock);
+	auto b = std::async(fooRead, std::ref(sock));
+	std::cout << "accepted\n";
+	foo();
+
+}
+int main()
+{
+	foo();
+				
+
+	return 0;
+
+}

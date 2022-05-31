@@ -1,0 +1,62 @@
+#include <iostream>
+
+#include <optional>
+#include <boost\asio.hpp>
+#include <thread>
+#include <vector>
+#include <unordered_set>
+#include <future>
+class Server {
+public:
+	Server() : acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 99)) {
+
+		startAccept();
+
+	}
+	void startReading(std::shared_ptr<boost::asio::ip::tcp::socket> &sock){
+		boost::asio::streambuf streamBuf;
+		boost::asio::read_until(*sock.get(), streamBuf, "\n");
+		std::istream is(&streamBuf);
+		std::string line;
+		std::getline(is, line);
+		//std::cout << line << "\n";
+		broadcast(line);
+		startReading(sock);
+	}
+	void broadcast(std::string & line) {
+		
+		
+
+			for (int i = 0; i < count; i++) {
+
+				boost::asio::write(*sockets[i].get(), boost::asio::buffer(line + "\n"));
+
+			}
+
+			
+			
+	}
+
+	void startAccept() {
+		std::shared_ptr<boost::asio::ip::tcp::socket> sock(new boost::asio::ip::tcp::socket(ioContext));
+
+		acceptor.accept(*sock.get());
+		sockets.push_back(sock);
+		count++;
+		std::cout << "accepted\n";
+		auto a = std::async(&Server::startReading, this, std::ref(sock));
+		startAccept();
+	}
+private:
+	int count = 0;
+	boost::asio::io_context ioContext;
+	boost::asio::ip::tcp::acceptor acceptor;
+	std::vector< std::shared_ptr<boost::asio::ip::tcp::socket>>sockets;
+
+};
+int main()
+{
+	Server a;
+	return 0;
+
+}

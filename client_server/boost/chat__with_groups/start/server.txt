@@ -1,0 +1,124 @@
+#include<nlohmann/json.hpp>
+#include<iostream>
+#include<string>
+#include<vector>
+#include<boost/asio.hpp>
+#include<algorithm>
+
+class Client {
+public:
+
+	std::string name;
+	int id;
+	std::shared_ptr<boost::asio::ip::tcp::socket> sock;
+
+public:
+	Client(std::string _name, int _idRoom, std::shared_ptr<boost::asio::ip::tcp::socket>& _sock) :name(_name), id(_idRoom), sock(_sock) {
+
+	}
+}; 
+
+class Room {
+public:
+
+	int id;
+	int index;
+	std::vector<Client>clients;
+	void broadcast(std::string &msg) {
+
+		for (Client cl : clients) {
+
+			std::shared_ptr<boost::asio::ip::tcp::socket> sock = cl.sock;
+
+			boost::asio::write(*sock.get(), boost::asio::buffer(msg + "\n"));
+		}
+			
+		
+	}
+};
+
+
+
+class Server {
+
+private:
+
+	boost::asio::io_context iocontext;
+	boost::asio::ip::tcp::acceptor acceptor;
+	std::vector<Room>rooms;
+	int indexRoom=-1;
+public:
+
+	Server(int i) : acceptor(iocontext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 99)) {}
+	
+	void run() {
+
+		std::shared_ptr<boost::asio::ip::tcp::socket> sock(new boost::asio::ip::tcp::socket(iocontext));
+		acceptor.accept(*sock.get());
+		auto a = std::async(&Server::acceptSocket,this,std::ref(sock));
+		run();
+
+	}
+
+	void acceptSocket(std::shared_ptr<boost::asio::ip::tcp::socket> &sock) {
+		
+		int id;
+		int option;		
+		boost::asio::streambuf streamBuf;
+		
+
+		boost::asio::read_until(*sock.get(), streamBuf, "\n");
+
+		std::istream is(&streamBuf);
+		std::string line;
+		std::getline(is, line);
+		std::string name;
+
+		nlohmann::json j1 = nlohmann::json::parse(line);
+		
+		name = j1["name"].get<std::string>();
+		option = j1["option"].get<int>();
+		id = j1["id"].get<int>();
+
+		if (option == 1) {
+			sock->close();
+			indexRoom++;
+			Room r;
+			r.index = indexRoom;
+			r.id = id;
+
+			rooms.push_back(r);
+;
+		}
+		else {
+			for (auto r : rooms) {
+				if (r.id == id) {
+
+					rooms[r.index].clients.push_back(Client(name, id, sock));
+					auto a = std::async(&Server::startReading, this, std::ref(sock),std::ref(r.index));
+
+					break;
+				}
+			}
+		}
+    }
+	void startReading(std::shared_ptr<boost::asio::ip::tcp::socket> &sock, int indexRoom) {
+	
+			boost::asio::streambuf streamBuf;
+			boost::asio::read_until(*sock.get(), streamBuf, "\n");
+			std::istream is(&streamBuf);
+			std::string line;
+			std::getline(is, line);
+			std::cout << line << "\n" << indexRoom << std::endl;
+			std::cout<<rooms[indexRoom].clients.size();
+			rooms[indexRoom].broadcast(line);
+			startReading(sock, indexRoom);
+	}
+};
+
+int main() {
+
+	Server a(9);
+	a.run();
+	return 0;
+}

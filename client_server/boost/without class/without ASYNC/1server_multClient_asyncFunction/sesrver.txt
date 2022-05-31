@@ -1,0 +1,56 @@
+#include <iostream>
+
+#include <optional>
+#include <boost\asio.hpp>
+#include <thread>
+#include <vector>
+#include <future>
+boost::asio::io_context ioContext;
+boost::asio::ip::tcp::acceptor acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), 99));
+void fooRead(boost::asio::ip::tcp::socket &sock) {
+	std::cout << "fooRead";
+		boost::asio::streambuf streamBuf;
+		boost::asio::read_until(sock, streamBuf, "\n");
+			std::istream is(&streamBuf);
+		std::string line;
+		std::getline(is, line);
+		std::cout << line;
+		
+
+		auto a = std::async(fooRead, std::ref(sock));
+
+			
+		
+
+}
+void fooWrite(boost::asio::ip::tcp::socket& sock) {
+	std::cout << "fooWrite";
+		std::string str;
+		std::cin >> str;
+		boost::asio::write(sock, boost::asio::buffer(str + "\n"));
+		auto a = std::async(fooWrite, std::ref(sock));
+
+}
+void foo() {
+
+	
+
+	boost::asio::ip::tcp::socket sock(ioContext);
+	std::cout << "accepting\n";
+	acceptor.accept(sock);
+
+	auto a = std::async(fooWrite, std::ref(sock));
+	auto b = std::async(fooRead, std::ref(sock));
+	std::cout << "accepted\n";
+	foo();
+
+}
+int main()
+{
+		
+	foo();
+				
+
+	return 0;
+
+}

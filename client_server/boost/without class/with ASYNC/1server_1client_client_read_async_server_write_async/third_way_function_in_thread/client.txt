@@ -1,0 +1,51 @@
+#include <iostream>
+#include <boost\asio.hpp>
+#include <sstream>
+#include <thread>
+
+void foo(boost::asio::ip::tcp::socket& sock, boost::asio::streambuf &streamBuf) {
+	std::cout << "in read 1";
+	boost::asio::async_read_until(sock, streamBuf, "\n", [&sock, &streamBuf]
+	(boost::system::error_code ec, size_t bytesTransferred) {
+			if (ec) {
+				std::cout << ec.message();
+				//return;
+			}
+			std::cout << "in read 2";
+
+			std::cout << bytesTransferred;
+			std::cout << "===============================================================\n";
+			std::istream is(&streamBuf);
+			std::string line;
+			std::getline(is, line);
+			std::cout << line << "\n";
+			std::cout << "===============================================================\n";
+
+			foo(sock, streamBuf);
+		}
+	);
+
+}
+
+int main()
+{
+	boost::asio::io_context ioContext;
+	boost::asio::ip::tcp::resolver resolver(ioContext);
+	boost::asio::ip::tcp::resolver::results_type endpoint = resolver.resolve("127.0.0.1", "99");
+
+	boost::asio::ip::tcp::socket sock(ioContext);
+	boost::asio::connect(sock, endpoint);
+	boost::asio::streambuf streamBuf;
+
+	std::thread t(foo,std::ref(sock), std::ref(streamBuf));
+	/*while (true) {
+		std::string str;
+		std::cin >> str;
+		boost::asio::write(sock, boost::asio::buffer((str+"\n").c_str(),str.size()+1));
+	}*/
+	t.join();
+
+	ioContext.run();
+
+
+}

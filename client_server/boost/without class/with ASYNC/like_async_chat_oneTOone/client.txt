@@ -1,0 +1,43 @@
+#include <iostream>
+#include <boost\asio.hpp>
+#include <sstream>
+#include <thread>
+
+void foo(boost::asio::ip::tcp::socket& sock, boost::asio::streambuf &streamBuf) {
+	std::cout << "in read 1";
+	boost::asio::read_until(sock, streamBuf, "\n");
+			
+
+			std::cout << "===============================================================\n";
+			std::istream is(&streamBuf);
+			std::string line;
+			std::getline(is, line);
+			std::cout << line << "\n";
+			std::cout << "===============================================================\n";
+			foo(sock, streamBuf);
+
+}
+void writeFoo(boost::asio::ip::tcp::socket& sock) {
+
+	std::string str;
+	std::cin >> str;
+	boost::asio::write(sock, boost::asio::buffer((str + "\n").c_str(), str.size() + 1));
+	std::cout << "sended";
+	writeFoo(sock);
+
+}
+
+int main()
+{
+	boost::asio::io_context ioContext;
+	boost::asio::ip::tcp::resolver resolver(ioContext);
+	boost::asio::ip::tcp::resolver::results_type endpoint = resolver.resolve("127.0.0.1", "99");
+	boost::asio::streambuf streamBuf;
+
+	boost::asio::ip::tcp::socket sock(ioContext);
+	boost::asio::connect(sock, endpoint);
+	auto ab = std::async(writeFoo, std::ref(sock));
+
+	auto a = std::async(foo,std::ref(sock),std::ref(streamBuf));
+
+}

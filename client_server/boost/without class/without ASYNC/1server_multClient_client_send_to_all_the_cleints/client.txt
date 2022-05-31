@@ -1,0 +1,39 @@
+#include <iostream>
+#include <boost\asio.hpp>
+#include <sstream>
+#include <thread>
+
+void foo(boost::asio::ip::tcp::socket& sock) {
+	while (true) {
+		std::string str;
+		std::cin >> str;
+		boost::asio::write(sock, boost::asio::buffer(str + "\n"));
+	}
+}
+int main()
+{
+	try {
+		boost::asio::io_context ioContext;
+		boost::asio::ip::tcp::resolver resolver(ioContext);
+		boost::asio::ip::tcp::resolver::results_type endpoint = resolver.resolve("127.0.0.1", "99");
+
+		boost::asio::ip::tcp::socket sock(ioContext);
+		boost::asio::connect(sock, endpoint);
+		std::thread t(foo, ref(sock));
+		while (true) {
+			boost::asio::streambuf streamBuf;
+			boost::system::error_code er;
+			boost::asio::read_until(sock, streamBuf, "\n", er);
+			std::istream is(&streamBuf);
+			std::string line;
+			std::getline(is, line);
+			std::cout << line;
+			if (er) {
+				throw boost::system::system_error(er);
+			}
+		}
+	}
+	catch(std::exception&er) {
+		std::cout << er.what();
+	}
+}
